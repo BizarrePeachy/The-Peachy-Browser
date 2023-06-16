@@ -1,10 +1,41 @@
-
+import os
+import sys
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtGui import QColor
+from PyQt5.QtCore import QUrl
+from PyQt5.QtNetwork import QNetworkCookieJar, QNetworkAccessManager
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPlainTextEdit
+from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (
+    QAction,
+    QApplication,
+    QCheckBox,
+    QLabel,
+    QMainWindow,
+    QStatusBar,
+    QToolBar,
+)
 
 #cookie holder
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setGeometry(100, 100, 600, 400)
+        self.setWindowIcon(QtGui.QIcon('peach.png'))
+        
+        # Set the file path for the cookies file relative to the script's directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        cookies_file = os.path.join(script_dir, 'cookies.txt')
         
         self.cookie_jar = QNetworkCookieJar(self)
         self.network_manager = QNetworkAccessManager(self)
@@ -14,27 +45,31 @@ class MainWindow(QMainWindow):
         self.cookie_output.setGeometry(50, 50, 500, 300)
         self.cookie_output.setReadOnly(True)
         self.cookie_output.setPlainText("")
+            
+        # Load cookies from the cookies file
+        self.load_cookies(cookies_file)
         
-        self.load_cookies()
+        # Save cookies to the cookies file when the window is closed
+        self.destroyed.connect(lambda: self.save_cookies(cookies_file))
         
-    def load_cookies(self):
+    def load_cookies(self, cookies_file):
         self.cookie_jar.setAllCookies([]) # clear any existing cookies
         
         # Load cookies from file
-        with open('cookies.txt', 'r') as f:
-            for line in f:
-                cookie = QNetworkCookie.parseCookies(line.encode())[0]
-                self.cookie_jar.insertCookie(cookie)
-                
-        self.cookie_output.setPlainText("Cookies loaded:\n" + "\n".join([str(cookie.toRawForm()) for cookie in self.cookie_jar.allCookies()]))
+        if os.path.isfile(cookies_file):
+            with open(cookies_file, 'r') as f:
+                for line in f:
+                    cookie = QNetworkCookie.parseCookies(line.encode())[0]
+                    self.cookie_jar.insertCookie(cookie)
+                    
+            self.cookie_output.setPlainText("Cookies loaded:\n" + "\n".join([str(cookie.toRawForm()) for cookie in self.cookie_jar.allCookies()]))
         
-    def save_cookies(self):
-        with open('cookies.txt', 'w') as f:
+    def save_cookies(self, cookies_file):
+        with open(cookies_file, 'w') as f:
             for cookie in self.cookie_jar.allCookies():
                 f.write(cookie.toRawForm().data().decode() + "\n")
                 
-        self.cookie_output.setPlainText("Cookies saved:\n" + "\n".join([str(cookie.toRawForm()) for cookie in self.cookie_jar.allCookies()]))
-        
+            self.cookie_output.setPlainText("Cookies saved:\n" + "\n".join([str(cookie.toRawForm()) for cookie in self.cookie_jar.allCookies()]))
 #style sheet
 class MyWidget(QWidget):
     def __init__(self):
